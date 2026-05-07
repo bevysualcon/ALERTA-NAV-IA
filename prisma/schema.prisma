@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Estudiante {
+  id              String   @id @default(cuid())
+  grado           String   // Capitan, Teniente, etc.
+  nombreCompleto  String
+  especialidad    String   // Ingenieria, Logistica, etc.
+  programa        String   // Nombre del programa de posgrado
+  cohorte         String   // 2026-I, 2026-II
+  correo          String   @unique
+  estado          String   @default("Activo") // Activo, En Riesgo, Critico, Retirado
+  notaPromedio    Float    @default(0)
+  asistenciaPct   Float    @default(100)
+  interaccionesLMS Int     @default(0)
+  fechaRegistro   DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  alertas         Alerta[]
+  riesgos         Riesgo[]
+}
+
+model Riesgo {
+  id              String   @id @default(cuid())
+  estudianteId    String
+  estudiante      Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  tipoRiesgo      String   // Academico, Asistencia, Interaccion, Tecnologico
+  nivelRiesgo     String   // Bajo, Medio, Alto, Critico
+  puntuacion      Float    // 0-100 score de riesgo
+  descripcion     String
+  fechaDeteccion  DateTime @default(now())
+  estado          String   @default("Activo") // Activo, Mitigado, Escalado
+}
+
+model Alerta {
+  id              String   @id @default(cuid())
+  estudianteId    String
+  estudiante      Estudiante @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  tipoAlerta      String   // Rendimiento, Asistencia, Inactividad, Oportunidad
+  prioridad       String   // Baja, Media, Alta, Urgente
+  mensaje         String
+  recomendacion   String   // Recomendacion IA
+  fechaCreacion   DateTime @default(now())
+  leida           Boolean  @default(false)
+  resuelta        Boolean  @default(false)
+}
+
+model Eficacia {
+  id              String   @id @default(cuid())
+  periodo         String   // 2026-I, Semana 1, etc.
+  metrica         String   // Tasa de desercion, Promedio general, Alertas resueltas
+  valor           Float
+  meta            Float
+  unidad          String   // %, pts, cantidad
+  fechaRegistro   DateTime @default(now())
+}
